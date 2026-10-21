@@ -1,465 +1,469 @@
-import { Sprite } from './sprite.js';
-import { MiniEngine } from './engine.js';
-import { toolboxXml, registerCustomBlocks } from './blocks.js';
-
-const stageCanvas = document.getElementById('stageCanvas');
-const canvas = document.getElementById('costumeCanvas');
-const ctx = canvas.getContext('2d');
-const engine = new MiniEngine(stageCanvas);
-const workspaceMap = new Map();
-
-const spriteListEl = document.getElementById('spriteList');
-const addSpriteButton = document.getElementById('addSpriteButton');
-const runButton = document.getElementById('runButton');
-const stopButton = document.getElementById('stopButton');
-
-const tabButtons = [...document.querySelectorAll('.tab-btn')];
-const tabPanels = {
-  code: document.getElementById('codeTab'),
-  costume: document.getElementById('costumeTab'),
-  sound: document.getElementById('soundTab'),
-};
-
-const brushSizeInput = document.getElementById('brushSize');
-const brushColorInput = document.getElementById('brushColor');
-const clearCostumeButton = document.getElementById('clearCostumeButton');
-const toneFrequencyInput = document.getElementById('toneFrequency');
-const toneDurationInput = document.getElementById('toneDuration');
-const playToneButton = document.getElementById('playToneButton');
-const saveToneButton = document.getElementById('saveToneButton');
-const soundList = document.getElementById('soundList');
-
-registerCustomBlocks();
-
-function makeStarterSprites() {
-  const player = new Sprite('Player');
-  player.x = -150;
-  player.y = 0;
-  player.color = '#4ecdc4';
-  player.size = 54;
-
-  const coin = new Sprite('Coin');
-  coin.x = 120;
-  coin.y = 40;
-  coin.color = '#f7b801';
-  coin.size = 26;
-
-  engine.addSprite(player);
-  engine.addSprite(coin);
+* {
+  box-sizing: border-box;
 }
 
-function createWorkspaceForSprite(sprite) {
-  if (workspaceMap.has(sprite.id)) {
-    return workspaceMap.get(sprite.id);
+:root {
+  --bg: #f3f0ea;
+  --panel: #f8f6f2;
+  --panel-strong: #f1efe9;
+  --panel-edge: #d9d1c7;
+  --ink: #1d1d1b;
+  --muted: #6b685f;
+  --line: rgba(29, 29, 27, 0.12);
+  --soft: rgba(29, 29, 27, 0.04);
+  --accent: #d67a3a;
+  --accent-soft: #f5e1d0;
+  --accent-strong: #b9642c;
+  --green: #4f8b69;
+  --green-soft: #dfeee5;
+  --danger: #ae4c4c;
+  --danger-soft: #f4dede;
+  --shadow: 0 8px 22px rgba(30, 24, 17, 0.08);
+  --radius: 14px;
+}
+
+html, body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Segoe UI", Tahoma, sans-serif;
+}
+
+button, input {
+  font: inherit;
+}
+
+button {
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.14s ease, box-shadow 0.14s ease;
+}
+
+button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(29, 29, 27, 0.05);
+}
+
+input[type="text"], input[type="number"], input[type="color"], input[type="file"] {
+  width: 100%;
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ink);
+  padding: 9px 10px;
+}
+
+input[type="range"] {
+  accent-color: var(--accent);
+}
+
+.app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+  background: var(--bg);
+}
+
+.sidebar {
+  width: 320px;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 18px 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.eyebrow {
+  margin: 0 0 4px;
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.sidebar-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.primary-btn {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent-strong);
+}
+
+.secondary-btn {
+  background: #fff;
+}
+
+.ghost-btn {
+  background: var(--panel-strong);
+}
+
+.danger-btn {
+  background: var(--danger-soft);
+  color: var(--danger);
+  border-color: rgba(174, 76, 76, 0.22);
+}
+
+.sprite-toolbar {
+  display: none;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: var(--shadow);
+}
+
+.sprite-toolbar.active {
+  display: block;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  color: var(--muted);
+}
+
+.field.compact {
+  margin-bottom: 0;
+}
+
+.sprite-toolbar-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.sprite-toolbar-row > * {
+  flex: 1;
+}
+
+.sprite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow: auto;
+  padding-right: 2px;
+}
+
+.sprite-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(255,255,255,0.8);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  min-height: 52px;
+}
+
+.sprite-card.selected {
+  border-color: rgba(214, 122, 58, 0.45);
+  background: rgba(245, 225, 208, 0.6);
+}
+
+.sprite-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.sprite-thumb {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: rgba(16, 16, 16, 0.75);
+  border: 1px solid rgba(0,0,0,0.08);
+  flex-shrink: 0;
+  background: #d9d9d9;
+}
+
+.sprite-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sprite-status {
+  font-size: 0.7rem;
+  color: var(--muted);
+  background: var(--soft);
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.main-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 18px 12px;
+  border-bottom: 1px solid var(--line);
+  background: var(--panel);
+}
+
+.tab-buttons {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tab-btn {
+  min-width: 84px;
+  background: #fff;
+  border: 1px solid var(--panel-edge);
+}
+
+.tab-btn.active {
+  background: var(--accent-soft);
+  border-color: rgba(214, 122, 58, 0.5);
+  color: var(--ink);
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+}
+
+.stage-panel {
+  padding: 12px 18px 0;
+}
+
+#stageCanvas {
+  display: block;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  background: #eaf1f8;
+  border: 1px solid rgba(28, 34, 53, 0.08);
+  border-radius: 14px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7);
+}
+
+.empty-editor-state {
+  display: block;
+  margin: 10px 18px 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed var(--panel-edge);
+  background: rgba(255,255,255,0.35);
+}
+
+.empty-editor-state.hidden {
+  display: none;
+}
+
+.tab-panel {
+  flex: 1;
+  min-height: 0;
+  display: block;
+  padding: 12px 18px 18px;
+}
+
+.tab-panel.hidden {
+  display: none;
+}
+
+.blockly-area {
+  height: 100%;
+  min-height: 320px;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px solid var(--line);
+}
+
+#blocklyDiv {
+  height: 100%;
+  min-height: 320px;
+  width: 100%;
+}
+
+.costume-editor, .sound-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tool-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+}
+
+.canvas-tool-group {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tool-btn {
+  background: #fff;
+  padding: 7px 10px;
+}
+
+.tool-btn.active {
+  background: var(--accent-soft);
+  border-color: rgba(214, 122, 58, 0.5);
+}
+
+.canvas-wrap {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--panel-strong);
+  border-radius: 14px;
+}
+
+#costumeCanvas {
+  width: min(420px, 100%);
+  aspect-ratio: 1;
+  border-radius: 14px;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #1f2937;
+  cursor: crosshair;
+}
+
+.sound-import-row {
+  justify-content: space-between;
+}
+
+.file-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ink);
+  font-size: 0.9rem;
+}
+
+.file-picker input {
+  max-width: 220px;
+}
+
+.sound-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.sound-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 12px;
+  min-width: 170px;
+}
+
+.sound-chip .name {
+  font-size: 0.88rem;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sound-chip button {
+  background: var(--green-soft);
+  color: var(--green);
+  border-color: rgba(79, 139, 105, 0.22);
+  padding: 5px 10px;
+}
+
+.sound-empty {
+  color: var(--muted);
+  background: rgba(255,255,255,0.5);
+  border: 1px dashed var(--line);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+@media (max-width: 920px) {
+  .app-shell {
+    flex-direction: column;
+    height: auto;
+    min-height: 100vh;
   }
 
-  const workspace = Blockly.inject('blocklyDiv', {
-    toolbox: toolboxXml,
-    theme: Blockly.Themes.Classic,
-    move: {
-      scrollbars: true,
-      drag: true,
-      wheel: true,
-    },
-    zoom: {
-      controls: true,
-      wheel: true,
-      startScale: 1,
-      maxScale: 3,
-      minScale: 0.3,
-    },
-  });
+  .sidebar {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--line);
+  }
 
-  workspace.addChangeListener(() => {
-    const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
-    sprite.programXml = xml;
-  });
+  .main-panel {
+    min-height: 60vh;
+  }
 
-  workspaceMap.set(sprite.id, workspace);
-  return workspace;
-}
+  .topbar {
+    flex-wrap: wrap;
+  }
 
-function renderSpriteList() {
-  spriteListEl.innerHTML = '';
-
-  for (const sprite of engine.sprites) {
-    const card = document.createElement('div');
-    card.className = 'sprite-card';
-    if (sprite.id === engine.selectedSpriteId) {
-      card.classList.add('selected');
-    }
-
-    card.addEventListener('click', () => {
-      engine.setSelectedSprite(sprite.id);
-      renderSpriteList();
-      loadSelectedSpriteWorkspace();
-      renderCostumeCanvas();
-      renderSoundList();
-    });
-
-    const meta = document.createElement('div');
-    meta.className = 'sprite-meta';
-
-    const thumb = document.createElement('div');
-    thumb.className = 'sprite-thumb';
-    thumb.textContent = sprite.name.slice(0, 2).toUpperCase();
-    thumb.style.background = `linear-gradient(135deg, ${sprite.color}, #7cc6ff)`;
-
-    const name = document.createElement('span');
-    name.className = 'sprite-name';
-    name.textContent = sprite.name;
-
-    meta.append(thumb, name);
-
-    const badge = document.createElement('span');
-    badge.textContent = sprite.visible ? 'ON' : 'OFF';
-    badge.style.color = sprite.visible ? '#5eead4' : '#fca5a5';
-    badge.style.fontSize = '0.72rem';
-    badge.style.opacity = '0.9';
-
-    card.append(meta, badge);
-    spriteListEl.appendChild(card);
+  .actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
 
-function loadSelectedSpriteWorkspace() {
-  const sprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!sprite) return;
-
-  const workspace = createWorkspaceForSprite(sprite);
-  const existingXml = sprite.programXml;
-  workspace.clear();
-
-  try {
-    const dom = Blockly.Xml.textToDom(existingXml);
-    if (dom && dom.nodeName !== '#text' && dom.childNodes.length > 0) {
-      Blockly.Xml.domToWorkspace(dom, workspace);
-    }
-  } catch (error) {
-    console.warn('Unable to restore workspace', error);
+@media (max-width: 580px) {
+  .sidebar-header {
+    flex-direction: column;
+    align-items: stretch;
   }
 
-  setTimeout(() => {
-    workspace.resize();
-  }, 20);
-}
-
-function runCurrentProject() {
-  engine.stop();
-  engine.clearLoops();
-
-  const activeSprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!activeSprite) return;
-
-  for (const sprite of engine.sprites) {
-    const workspace = workspaceMap.get(sprite.id);
-    if (!workspace) continue;
-
-    const script = Blockly.JavaScript.workspaceToCode(workspace);
-    const runner = new Function('engine', `
-      const sprite = engine.getSpriteById('${sprite.id}');
-      engine.currentSpriteId = '${sprite.id}';
-      try {
-        ${script}
-      } catch (error) {
-        console.error('Script error on ' + sprite.name, error);
-      }
-    `);
-
-    runner(engine);
+  .sprite-toolbar-row {
+    flex-wrap: wrap;
   }
 
-  engine.render();
-  engine.start();
-}
-
-function setActiveTab(tabName) {
-  tabButtons.forEach((button) => {
-    button.classList.toggle('active', button.dataset.tab === tabName);
-  });
-
-  Object.entries(tabPanels).forEach(([key, panel]) => {
-    panel.classList.toggle('hidden', key !== tabName);
-  });
-}
-
-function renderCostumeCanvas() {
-  const sprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!sprite) return;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#0b1020';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  const image = new Image();
-  image.onload = () => {
-    const size = 180;
-    const x = canvas.width / 2 - size / 2;
-    const y = canvas.height / 2 - size / 2;
-    ctx.drawImage(image, x, y, size, size);
-  };
-  image.src = sprite.getCurrentCostume().dataUrl;
-
-  const activeColor = brushColorInput.value;
-  brushColorInput.value = sprite.color;
-  ctx.strokeStyle = activeColor;
-}
-
-function beginDrawing(event) {
-  const sprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!sprite) return;
-
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const x = (event.clientX - rect.left) * scaleX;
-  const y = (event.clientY - rect.top) * scaleY;
-
-  const image = new Image();
-  image.src = sprite.getCurrentCostume().dataUrl;
-
-  ctx.lineWidth = Number(brushSizeInput.value);
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.strokeStyle = brushColorInput.value;
-  ctx.beginPath();
-  ctx.moveTo(x, y);
-  ctx.lineTo(x + 1, y + 1);
-  ctx.stroke();
-
-  const dataUrl = canvas.toDataURL();
-  sprite.costumes[0].dataUrl = dataUrl;
-  sprite.color = brushColorInput.value;
-  renderSpriteList();
-}
-
-function clearCostume() {
-  const sprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!sprite) return;
-
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#0b1020';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  sprite.costumes[0].dataUrl = sprite.createDefaultCostumeDataUrl(sprite.color);
-  renderCostumeCanvas();
-}
-
-function renderSoundList() {
-  const sprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!sprite) return;
-
-  soundList.innerHTML = '';
-
-  if (!sprite.sounds.length) {
-    const empty = document.createElement('div');
-    empty.textContent = 'No sounds yet. Generate one in the sound tab.';
-    empty.style.opacity = '0.82';
-    soundList.appendChild(empty);
-    return;
+  .tab-btn {
+    flex: 1 1 calc(50% - 8px);
   }
 
-  for (const sound of sprite.sounds) {
-    const chip = document.createElement('div');
-    chip.className = 'sound-chip';
-
-    const label = document.createElement('span');
-    label.textContent = sound.name;
-
-    const play = document.createElement('button');
-    play.textContent = 'Play';
-    play.addEventListener('click', () => {
-      const audio = new Audio(sound.dataUrl);
-      audio.play();
-    });
-
-    chip.append(label, play);
-    soundList.appendChild(chip);
+  .sound-chip {
+    width: 100%;
   }
 }
-
-function generateTone() {
-  const sprite = engine.getSpriteById(engine.selectedSpriteId);
-  if (!sprite) return;
-
-  const context = engine.getAudioContext();
-  if (!context) return;
-
-  const oscillator = context.createOscillator();
-  const gainNode = context.createGain();
-  const frequency = Number(toneFrequencyInput.value);
-  const duration = Number(toneDurationInput.value);
-
-  oscillator.type = 'square';
-  oscillator.frequency.value = frequency;
-  gainNode.gain.value = 0.05;
-  oscillator.connect(gainNode);
-  gainNode.connect(context.destination);
-
-  oscillator.start();
-  oscillator.stop(context.currentTime + duration);
-
-  const dataUrl = createToneDataUrl(frequency, duration);
-  sprite.sounds.push({
-    id: crypto.randomUUID(),
-    name: `tone-${sprite.sounds.length + 1}`,
-    dataUrl,
-  });
-  renderSoundList();
-}
-
-function createToneDataUrl(frequency, duration) {
-  const waveform = new AudioContext();
-  const sampleRate = 22050;
-  const frameCount = sampleRate * duration;
-  const audioBuffer = waveform.createBuffer(1, frameCount, sampleRate);
-  const channelData = audioBuffer.getChannelData(0);
-
-  for (let i = 0; i < frameCount; i += 1) {
-    const t = i / sampleRate;
-    const envelope = 1 - t / duration;
-    channelData[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.25;
-  }
-
-  const wavBlob = audioBufferToWav(audioBuffer);
-  return URL.createObjectURL(wavBlob);
-}
-
-function audioBufferToWav(audioBuffer) {
-  const numChannels = audioBuffer.numberOfChannels;
-  const sampleRate = audioBuffer.sampleRate;
-  const format = 1;
-  const bitDepth = 16;
-  const samples = audioBuffer.length * numChannels;
-  const buffer = new ArrayBuffer(44 + samples * 2);
-  const view = new DataView(buffer);
-
-  const writeString = (offset, string) => {
-    for (let i = 0; i < string.length; i += 1) {
-      view.setUint8(offset + i, string.charCodeAt(i));
-    }
-  };
-
-  writeString(0, 'RIFF');
-  view.setUint32(4, 36 + samples * 2, true);
-  writeString(8, 'WAVE');
-  writeString(12, 'fmt ');
-  view.setUint32(16, 16, true);
-  view.setUint16(20, format, true);
-  view.setUint16(22, numChannels, true);
-  view.setUint32(24, sampleRate, true);
-  view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
-  view.setUint16(32, numChannels * (bitDepth / 8), true);
-  view.setUint16(34, bitDepth, true);
-  writeString(36, 'data');
-  view.setUint32(40, samples * 2, true);
-
-  let offset = 44;
-  for (let i = 0; i < audioBuffer.length; i += 1) {
-    for (let channel = 0; channel < numChannels; channel += 1) {
-      const data = Math.max(-1, Math.min(1, audioBuffer.getChannelData(channel)[i]));
-      view.setInt16(offset, data < 0 ? data * 0x8000 : data * 0x7fff, true);
-      offset += 2;
-    }
-  }
-
-  return new Blob([buffer], { type: 'audio/wav' });
-}
-
-function bindEvents() {
-  addSpriteButton.addEventListener('click', () => {
-    const count = engine.sprites.length + 1;
-    const sprite = new Sprite(`Sprite ${count}`);
-    sprite.x = (Math.random() - 0.5) * 250;
-    sprite.y = (Math.random() - 0.5) * 180;
-    sprite.color = ['#4ecdc4', '#f7b801', '#ff6b6b', '#81c784'][count % 4];
-    engine.addSprite(sprite);
-    renderSpriteList();
-    engine.setSelectedSprite(sprite.id);
-    loadSelectedSpriteWorkspace();
-    renderCostumeCanvas();
-    renderSoundList();
-  });
-
-  tabButtons.forEach((button) => {
-    button.addEventListener('click', () => setActiveTab(button.dataset.tab));
-  });
-
-  runButton.addEventListener('click', runCurrentProject);
-  stopButton.addEventListener('click', () => {
-    engine.stop();
-  });
-
-  clearCostumeButton.addEventListener('click', clearCostume);
-  playToneButton.addEventListener('click', generateTone);
-
-  canvas.addEventListener('pointerdown', beginDrawing);
-  canvas.addEventListener('pointermove', (event) => {
-    if (event.buttons === 1) {
-      beginDrawing(event);
-    }
-  });
-
-  saveToneButton.addEventListener('click', () => {
-    generateTone();
-  });
-}
-
-makeStarterSprites();
-renderSpriteList();
-engine.setSelectedSprite(engine.sprites[0].id);
-loadSelectedSpriteWorkspace();
-setActiveTab('code');
-renderCostumeCanvas();
-renderSoundList();
-bindEvents();
-engine.render();
-
-window.engine = engine;
-window.Blockly = Blockly;
-window.addEventListener('resize', () => {
-  for (const workspace of workspaceMap.values()) {
-    workspace.resize();
-  }
-});
-
-console.log('MiniEngine-I ready');
-
-window.makeCoinExample = () => {
-  const coin = engine.getSpriteByName('Coin');
-  if (!coin) return;
-  const workspace = workspaceMap.get(coin.id);
-  if (!workspace) return;
-
-  const xml = `
-    <xml xmlns="http://www.w3.org/1999/xhtml">
-      <block type="when_green_flag" x="80" y="80">
-        <statement name="DO">
-          <block type="loop_forever">
-            <statement name="DO">
-              <block type="if_touching_sprite">
-                <field name="SPRITE">Player</field>
-                <statement name="DO">
-                  <block type="hide_sprite"></block>
-                  <next>
-                    <block type="change_variable">
-                      <field name="VAR">score</field>
-                      <value name="VALUE">
-                        <block type="math_number">
-                          <field name="NUM">1</field>
-                        </block>
-                      </value>
-                    </block>
-                  </next>
-                </statement>
-              </block>
-            </statement>
-          </block>
-        </statement>
-      </block>
-    </xml>
-  `;
-
-  workspace.clear();
-  Blockly.Xml.domToWorkspace(Blockly.Xml.textToDom(xml), workspace);
-  coin.programXml = xml;
-};
