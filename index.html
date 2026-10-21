@@ -4,7 +4,264 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MiniEngine-I</title>
-    <link rel="stylesheet" href="./styles.css" />
+    <style>
+      * { box-sizing: border-box; }
+      :root {
+        --bg: #0d1221;
+        --panel: #171f33;
+        --panel-2: #1e2943;
+        --accent: #5eead4;
+        --accent-2: #7cc6ff;
+        --text: #edf7ff;
+        --muted: #a9b6d4;
+        --warning: #fbbf24;
+        --danger: #ff6b6b;
+        --shadow: rgba(0, 0, 0, 0.25);
+      }
+
+      html, body {
+        margin: 0;
+        min-height: 100vh;
+        background: linear-gradient(180deg, #0d1221 0%, #111827 100%);
+        color: var(--text);
+        font-family: Inter, "Segoe UI", sans-serif;
+      }
+
+      button, input {
+        font: inherit;
+      }
+
+      .app-shell {
+        display: flex;
+        height: 100vh;
+        width: 100vw;
+      }
+
+      .sidebar {
+        width: 300px;
+        background: rgba(16, 23, 38, 0.9);
+        border-right: 1px solid rgba(255,255,255,0.08);
+        padding: 20px 16px;
+      }
+
+      .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+        gap: 12px;
+      }
+
+      .sidebar-header h1 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+
+      .primary-btn, .secondary-btn, .tab-btn {
+        border: 1px solid rgba(255,255,255,0.12);
+        border-radius: 10px;
+        padding: 9px 14px;
+        color: var(--text);
+        background: var(--panel-2);
+        cursor: pointer;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+
+      .primary-btn {
+        background: linear-gradient(135deg, var(--accent), var(--accent-2));
+        color: #0a1221;
+        font-weight: 700;
+      }
+
+      .primary-btn:hover, .secondary-btn:hover, .tab-btn:hover {
+        transform: translateY(-1px);
+      }
+
+      .sprite-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .sprite-card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 10px 12px;
+        gap: 12px;
+        cursor: pointer;
+      }
+
+      .sprite-card.selected {
+        border-color: var(--accent);
+        background: rgba(94, 234, 212, 0.10);
+      }
+
+      .sprite-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .sprite-thumb {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #4ecdc4, #7cc6ff);
+        display: grid;
+        place-items: center;
+        font-size: 0.7rem;
+        color: #092535;
+        font-weight: 700;
+      }
+
+      .sprite-name {
+        font-weight: 600;
+      }
+
+      .main-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .topbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 16px 20px 12px;
+        background: rgba(15, 18, 26, 0.65);
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+      }
+
+      .tab-buttons {
+        display: flex;
+        gap: 8px;
+      }
+
+      .tab-btn.active {
+        background: rgba(94, 234, 212, 0.12);
+        border-color: rgba(94, 234, 212, 0.65);
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+      }
+
+      .stage-panel {
+        padding: 14px 18px;
+        background: rgba(255,255,255,0.02);
+      }
+
+      #stageCanvas {
+        display: block;
+        width: 100%;
+        max-width: 960px;
+        margin: 0 auto;
+        background: linear-gradient(180deg, #eaf7ff 0%, #dfeefd 100%);
+        border: 2px solid rgba(8, 42, 62, 0.25);
+        border-radius: 18px;
+        box-shadow: 0 20px 40px var(--shadow);
+      }
+
+      .tab-panel {
+        flex: 1;
+        min-height: 0;
+        display: block;
+        padding: 14px 18px 20px;
+      }
+
+      .tab-panel.hidden {
+        display: none;
+      }
+
+      .blockly-area {
+        height: 100%;
+        min-height: 360px;
+        background: rgba(255,255,255,0.02);
+        border-radius: 16px;
+        border: 1px solid rgba(255,255,255,0.08);
+      }
+
+      #blocklyDiv {
+        height: 100%;
+        min-height: 360px;
+        width: 100%;
+      }
+
+      .costume-editor, .sound-editor {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .tool-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+
+      #costumeCanvas {
+        background: linear-gradient(180deg, #0b1020, #10193a);
+        border-radius: 20px;
+        width: 100%;
+        max-width: 420px;
+        aspect-ratio: 1;
+        border: 2px solid rgba(255,255,255,0.18);
+        cursor: crosshair;
+      }
+
+      .sound-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .sound-chip {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.09);
+        border-radius: 12px;
+        padding: 10px 12px;
+        min-width: 120px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .sound-chip button {
+        background: rgba(94, 234, 212, 0.12);
+        border: 1px solid rgba(94, 234, 212, 0.4);
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+
+      @media (max-width: 920px) {
+        .app-shell {
+          flex-direction: column;
+          height: auto;
+        }
+
+        .sidebar {
+          width: 100%;
+          border-right: none;
+          border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+      }
+    </style>
   </head>
   <body>
     <div class="app-shell">
@@ -13,7 +270,6 @@
           <h1>MiniEngine-I</h1>
           <button id="addSpriteButton" class="primary-btn">Add Sprite</button>
         </div>
-
         <div id="spriteList" class="sprite-list" aria-label="Sprite list"></div>
       </aside>
 
@@ -24,7 +280,6 @@
             <button class="tab-btn" data-tab="costume">Costume</button>
             <button class="tab-btn" data-tab="sound">Sound</button>
           </div>
-
           <div class="actions">
             <button id="runButton" class="primary-btn">Run</button>
             <button id="stopButton" class="secondary-btn">Stop</button>
@@ -64,14 +319,764 @@
               <button id="playToneButton" class="primary-btn">Play</button>
               <button id="saveToneButton" class="secondary-btn">Save Sound</button>
             </div>
-
             <div id="soundList" class="sound-list"></div>
           </div>
         </section>
       </main>
     </div>
 
-    <script src="https://unpkg.com/blockly/blockly.min.js" defer></script>
-    <script type="module" src="./js/app.js" defer></script>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script>
+      class Sprite {
+        constructor(name = 'Sprite') {
+          this.id = (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'sprite-' + Math.random().toString(16).slice(2);
+          this.name = name;
+          this.x = 0;
+          this.y = 0;
+          this.rotation = 0;
+          this.size = 46;
+          this.visible = true;
+          this.color = '#4ecdc4';
+          this.variables = { score: 0, collected: 0 };
+          this.costumes = [{ id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'costume-' + Math.random().toString(16).slice(2), name: 'costume1', dataUrl: this.createDefaultCostumeDataUrl(this.color) }];
+          this.currentCostumeIndex = 0;
+          this.sounds = [];
+          this.programXml = '<xml xmlns="http://www.w3.org/1999/xhtml"></xml>';
+        }
+
+        createDefaultCostumeDataUrl(color) {
+          const svg = `
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+              <circle cx="50" cy="50" r="38" fill="${color}" />
+              <circle cx="36" cy="40" r="6" fill="#fff" opacity="0.8" />
+              <circle cx="64" cy="40" r="6" fill="#fff" opacity="0.8" />
+              <path d="M32 62 Q50 72 68 62" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round" />
+            </svg>
+          `;
+          return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        }
+
+        getCurrentCostume() {
+          return this.costumes[this.currentCostumeIndex] ?? this.costumes[0];
+        }
+      }
+
+      class MiniEngine {
+        constructor(canvas) {
+          this.canvas = canvas;
+          this.ctx = this.canvas.getContext('2d');
+          this.sprites = [];
+          this.selectedSpriteId = null;
+          this.loops = [];
+          this.running = false;
+          this.currentSpriteId = null;
+          this.animationFrame = null;
+          this.audioContext = null;
+        }
+
+        addSprite(sprite) {
+          this.sprites.push(sprite);
+          if (!this.selectedSpriteId) this.selectedSpriteId = sprite.id;
+          return sprite;
+        }
+
+        getSpriteById(id) {
+          return this.sprites.find((s) => s.id === id) ?? null;
+        }
+
+        getSpriteByName(name) {
+          if (!name) return null;
+          return this.sprites.find((s) => s.name.toLowerCase() === String(name).toLowerCase()) ?? null;
+        }
+
+        setSelectedSprite(id) {
+          this.selectedSpriteId = id;
+          this.currentSpriteId = id;
+        }
+
+        registerLoop(handle) {
+          this.loops.push(handle);
+        }
+
+        clearLoops() {
+          for (const handle of this.loops) {
+            clearInterval(handle);
+          }
+          this.loops = [];
+        }
+
+        setVariable(spriteId, name, value) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.variables[name] = Number(value) || value;
+        }
+
+        changeVariable(spriteId, name, delta) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          const current = Number(sprite.variables[name] ?? 0);
+          sprite.variables[name] = current + Number(delta || 0);
+        }
+
+        setPosition(spriteId, x, y) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.x = Number(x || 0);
+          sprite.y = Number(y || 0);
+        }
+
+        moveSprite(spriteId, steps) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          const radians = (sprite.rotation * Math.PI) / 180;
+          sprite.x += Math.cos(radians) * Number(steps || 0);
+          sprite.y += Math.sin(radians) * Number(steps || 0);
+        }
+
+        turn(spriteId, angle) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.rotation += Number(angle || 0);
+        }
+
+        moveTowardSprite(spriteId, targetName, speed) {
+          const sprite = this.getSpriteById(spriteId);
+          const target = this.getSpriteByName(targetName);
+          if (!sprite || !target) return;
+          const dx = target.x - sprite.x;
+          const dy = target.y - sprite.y;
+          const distance = Math.hypot(dx, dy) || 1;
+          sprite.x += (dx / distance) * Number(speed || 0);
+          sprite.y += (dy / distance) * Number(speed || 0);
+        }
+
+        distanceToSprite(spriteId, targetName) {
+          const sprite = this.getSpriteById(spriteId);
+          const target = this.getSpriteByName(targetName);
+          if (!sprite || !target) return 0;
+          return Math.hypot(target.x - sprite.x, target.y - sprite.y);
+        }
+
+        isTouchingSprite(spriteId, targetName) {
+          const sprite = this.getSpriteById(spriteId);
+          const target = this.getSpriteByName(targetName);
+          if (!sprite || !target) return false;
+          const distance = Math.hypot(target.x - sprite.x, target.y - sprite.y);
+          const threshold = (sprite.size + target.size) / 2;
+          return distance <= threshold;
+        }
+
+        isTouchingEdge(spriteId) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return false;
+          const halfSize = sprite.size / 2;
+          return sprite.x + halfSize > this.canvas.width / 2 || sprite.x - halfSize < -this.canvas.width / 2 || sprite.y + halfSize > this.canvas.height / 2 || sprite.y - halfSize < -this.canvas.height / 2;
+        }
+
+        hideSprite(spriteId) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.visible = false;
+        }
+
+        showSprite(spriteId) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.visible = true;
+        }
+
+        setSize(spriteId, size) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.size = Number(size || 50);
+        }
+
+        setColor(spriteId, color) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.color = color || sprite.color;
+          sprite.costumes[0].dataUrl = sprite.createDefaultCostumeDataUrl(sprite.color);
+        }
+
+        destroySprite(spriteId) {
+          const sprite = this.getSpriteById(spriteId);
+          if (!sprite) return;
+          sprite.visible = false;
+          sprite.deleted = true;
+        }
+
+        wait(seconds) {
+          return new Promise((resolve) => setTimeout(resolve, Number(seconds || 0) * 1000));
+        }
+
+        getAudioContext() {
+          if (!this.audioContext) {
+            const AudioCtor = window.AudioContext || window.webkitAudioContext;
+            if (AudioCtor) this.audioContext = new AudioCtor();
+          }
+          return this.audioContext;
+        }
+
+        playSound(spriteId, soundName) {
+          const context = this.getAudioContext();
+          if (!context) return;
+          const oscillator = context.createOscillator();
+          const gainNode = context.createGain();
+          const frequency = { Bleep: 330, Chime: 540, Pop: 780 }[soundName] || 440;
+          oscillator.type = 'sine';
+          oscillator.frequency.value = frequency;
+          gainNode.gain.value = 0.03;
+          oscillator.connect(gainNode);
+          gainNode.connect(context.destination);
+          oscillator.start();
+          oscillator.stop(context.currentTime + 0.13);
+        }
+
+        drawSprite(sprite) {
+          const ctx = this.ctx;
+          const image = new Image();
+          image.src = sprite.getCurrentCostume().dataUrl;
+          ctx.save();
+          ctx.translate(this.canvas.width / 2 + sprite.x, this.canvas.height / 2 - sprite.y);
+          ctx.rotate((sprite.rotation * Math.PI) / 180);
+          ctx.translate(-sprite.size / 2, -sprite.size / 2);
+          ctx.drawImage(image, 0, 0, sprite.size, sprite.size);
+          ctx.restore();
+        }
+
+        render() {
+          const ctx = this.ctx;
+          ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+          ctx.fillStyle = '#eaf7ff';
+          ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          ctx.strokeStyle = 'rgba(30, 41, 59, 0.18)';
+          ctx.lineWidth = 1;
+          for (let x = 0; x <= this.canvas.width; x += 40) {
+            ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, this.canvas.height); ctx.stroke();
+          }
+          for (let y = 0; y <= this.canvas.height; y += 40) {
+            ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(this.canvas.width, y); ctx.stroke();
+          }
+          for (const sprite of this.sprites) {
+            if (!sprite.visible || sprite.deleted) continue;
+            this.drawSprite(sprite);
+          }
+        }
+
+        start() {
+          this.running = true;
+          const tick = () => {
+            this.render();
+            if (this.running) this.animationFrame = requestAnimationFrame(tick);
+          };
+          if (!this.animationFrame) this.animationFrame = requestAnimationFrame(tick);
+        }
+
+        stop() {
+          this.running = false;
+          this.clearLoops();
+          if (this.animationFrame) {
+            cancelAnimationFrame(this.animationFrame);
+            this.animationFrame = null;
+          }
+          this.render();
+        }
+      }
+
+      const stageCanvas = document.getElementById('stageCanvas');
+      const costumeCanvas = document.getElementById('costumeCanvas');
+      const costumeCtx = costumeCanvas.getContext('2d');
+      const engine = new MiniEngine(stageCanvas);
+      const workspaceMap = new Map();
+      const spriteListEl = document.getElementById('spriteList');
+      const addSpriteButton = document.getElementById('addSpriteButton');
+      const runButton = document.getElementById('runButton');
+      const stopButton = document.getElementById('stopButton');
+      const tabButtons = [...document.querySelectorAll('.tab-btn')];
+      const tabPanels = { code: document.getElementById('codeTab'), costume: document.getElementById('costumeTab'), sound: document.getElementById('soundTab') };
+      const brushSizeInput = document.getElementById('brushSize');
+      const brushColorInput = document.getElementById('brushColor');
+      const clearCostumeButton = document.getElementById('clearCostumeButton');
+      const toneFrequencyInput = document.getElementById('toneFrequency');
+      const toneDurationInput = document.getElementById('toneDuration');
+      const playToneButton = document.getElementById('playToneButton');
+      const saveToneButton = document.getElementById('saveToneButton');
+      const soundList = document.getElementById('soundList');
+
+      const toolboxXml = `
+        <xml id="toolbox" style="display:none">
+          <category name="Control" colour="#5E81AC">
+            <block type="when_green_flag"></block>
+            <block type="loop_forever"></block>
+            <block type="if_touching_sprite"></block>
+            <block type="wait_seconds"></block>
+          </category>
+          <category name="Motion" colour="#E67E22">
+            <block type="move_steps"></block>
+            <block type="set_xy"></block>
+            <block type="move_toward_sprite"></block>
+            <block type="turn_right"></block>
+            <block type="turn_left"></block>
+          </category>
+          <category name="Looks" colour="#C25D91">
+            <block type="show_sprite"></block>
+            <block type="hide_sprite"></block>
+            <block type="set_size"></block>
+            <block type="set_color"></block>
+          </category>
+          <category name="Sensing" colour="#2ECC71">
+            <block type="sprite_touching_other"></block>
+            <block type="distance_to_sprite"></block>
+            <block type="touching_edge"></block>
+          </category>
+          <category name="Variables" colour="#F1C40F">
+            <block type="set_variable"></block>
+            <block type="change_variable"></block>
+            <block type="random_between"></block>
+          </category>
+          <category name="Sprites" colour="#8E44AD">
+            <block type="destroy_sprite"></block>
+            <block type="set_position_absolute"></block>
+          </category>
+          <category name="Sounds" colour="#16A085">
+            <block type="play_sound"></block>
+          </category>
+        </xml>`;
+
+      function registerCustomBlocks() {
+        if (typeof window === 'undefined' || typeof Blockly === 'undefined') return;
+        if (window.__miniEngineBlocksRegistered) return;
+
+        const blocks = [
+          { type: 'when_green_flag', message0: 'when green flag clicked %1', args0: [{ type: 'input_statement', name: 'DO' }], colour: 180, previousStatement: null, nextStatement: null },
+          { type: 'loop_forever', message0: 'forever %1', args0: [{ type: 'input_statement', name: 'DO' }], colour: 160, previousStatement: null, nextStatement: null },
+          { type: 'if_touching_sprite', message0: 'if touching %1 %2', args0: [{ type: 'field_dropdown', name: 'SPRITE', options: [['Player', 'Player'], ['Coin', 'Coin'], ['Sprite', 'Sprite']] }, { type: 'input_statement', name: 'DO' }], colour: 160, previousStatement: null, nextStatement: null },
+          { type: 'wait_seconds', message0: 'wait %1 seconds', args0: [{ type: 'input_value', name: 'SECONDS' }], colour: 160, previousStatement: null, nextStatement: null },
+          { type: 'move_steps', message0: 'move %1 steps', args0: [{ type: 'input_value', name: 'STEPS' }], colour: 210, previousStatement: null, nextStatement: null },
+          { type: 'set_xy', message0: 'set position x %1 y %2', args0: [{ type: 'input_value', name: 'X' }, { type: 'input_value', name: 'Y' }], colour: 210, previousStatement: null, nextStatement: null },
+          { type: 'move_toward_sprite', message0: 'move toward %1 at speed %2', args0: [{ type: 'field_dropdown', name: 'SPRITE', options: [['Player', 'Player'], ['Coin', 'Coin'], ['Sprite', 'Sprite']] }, { type: 'input_value', name: 'SPEED' }], colour: 210, previousStatement: null, nextStatement: null },
+          { type: 'turn_right', message0: 'turn right %1 degrees', args0: [{ type: 'input_value', name: 'ANGLE' }], colour: 210, previousStatement: null, nextStatement: null },
+          { type: 'turn_left', message0: 'turn left %1 degrees', args0: [{ type: 'input_value', name: 'ANGLE' }], colour: 210, previousStatement: null, nextStatement: null },
+          { type: 'show_sprite', message0: 'show sprite', colour: 300, previousStatement: null, nextStatement: null },
+          { type: 'hide_sprite', message0: 'hide sprite', colour: 300, previousStatement: null, nextStatement: null },
+          { type: 'set_size', message0: 'set size to %1', args0: [{ type: 'input_value', name: 'SIZE' }], colour: 300, previousStatement: null, nextStatement: null },
+          { type: 'set_color', message0: 'set color to %1', args0: [{ type: 'input_value', name: 'COLOR' }], colour: 300, previousStatement: null, nextStatement: null },
+          { type: 'sprite_touching_other', message0: 'sprite touching %1', args0: [{ type: 'field_dropdown', name: 'SPRITE', options: [['Player', 'Player'], ['Coin', 'Coin'], ['Sprite', 'Sprite']] }], output: 'Boolean', colour: 120 },
+          { type: 'distance_to_sprite', message0: 'distance to %1', args0: [{ type: 'field_dropdown', name: 'SPRITE', options: [['Player', 'Player'], ['Coin', 'Coin'], ['Sprite', 'Sprite']] }], output: 'Number', colour: 120 },
+          { type: 'touching_edge', message0: 'touching edge', output: 'Boolean', colour: 120 },
+          { type: 'set_variable', message0: 'set %1 to %2', args0: [{ type: 'field_variable', name: 'VAR', variable: 'score' }, { type: 'input_value', name: 'VALUE' }], colour: 230, previousStatement: null, nextStatement: null },
+          { type: 'change_variable', message0: 'change %1 by %2', args0: [{ type: 'field_variable', name: 'VAR', variable: 'score' }, { type: 'input_value', name: 'VALUE' }], colour: 230, previousStatement: null, nextStatement: null },
+          { type: 'random_between', message0: 'random between %1 and %2', args0: [{ type: 'input_value', name: 'MIN' }, { type: 'input_value', name: 'MAX' }], output: 'Number', colour: 230 },
+          { type: 'destroy_sprite', message0: 'hide and remove this sprite', colour: 290, previousStatement: null, nextStatement: null },
+          { type: 'set_position_absolute', message0: 'set absolute x %1 y %2', args0: [{ type: 'input_value', name: 'X' }, { type: 'input_value', name: 'Y' }], colour: 290, previousStatement: null, nextStatement: null },
+          { type: 'play_sound', message0: 'play sound %1', args0: [{ type: 'field_dropdown', name: 'SOUND', options: [['Bleep', 'Bleep'], ['Chime', 'Chime'], ['Pop', 'Pop']] }], colour: 150, previousStatement: null, nextStatement: null }
+        ];
+
+        Blockly.defineBlocksWithJsonArray(blocks);
+
+        Blockly.JavaScript['when_green_flag'] = function (block) {
+          return Blockly.JavaScript.statementToCode(block, 'DO');
+        };
+        Blockly.JavaScript['loop_forever'] = function (block) {
+          const branch = Blockly.JavaScript.statementToCode(block, 'DO');
+          return `engine.registerLoop(setInterval(() => {\n${branch}\n}, 80));\n`;
+        };
+        Blockly.JavaScript['if_touching_sprite'] = function (block) {
+          const spriteName = block.getFieldValue('SPRITE');
+          const branch = Blockly.JavaScript.statementToCode(block, 'DO');
+          return `if (engine.isTouchingSprite(engine.currentSpriteId, ${JSON.stringify(spriteName)})) {\n${branch}\n}\n`;
+        };
+        Blockly.JavaScript['wait_seconds'] = function (block) {
+          const seconds = Blockly.JavaScript.valueToCode(block, 'SECONDS', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          return `engine.wait(${seconds});\n`;
+        };
+        Blockly.JavaScript['move_steps'] = function (block) {
+          const steps = Blockly.JavaScript.valueToCode(block, 'STEPS', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          return `engine.moveSprite(engine.currentSpriteId, ${steps});\n`;
+        };
+        Blockly.JavaScript['set_xy'] = function (block) {
+          const x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          return `engine.setPosition(engine.currentSpriteId, ${x}, ${y});\n`;
+        };
+        Blockly.JavaScript['move_toward_sprite'] = function (block) {
+          const target = block.getFieldValue('SPRITE');
+          const speed = Blockly.JavaScript.valueToCode(block, 'SPEED', Blockly.JavaScript.ORDER_ATOMIC) || '3';
+          return `engine.moveTowardSprite(engine.currentSpriteId, ${JSON.stringify(target)}, ${speed});\n`;
+        };
+        Blockly.JavaScript['turn_right'] = function (block) {
+          const angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC) || '10';
+          return `engine.turn(engine.currentSpriteId, ${angle});\n`;
+        };
+        Blockly.JavaScript['turn_left'] = function (block) {
+          const angle = Blockly.JavaScript.valueToCode(block, 'ANGLE', Blockly.JavaScript.ORDER_ATOMIC) || '10';
+          return `engine.turn(engine.currentSpriteId, -(${angle}));\n`;
+        };
+        Blockly.JavaScript['show_sprite'] = function () { return `engine.showSprite(engine.currentSpriteId);\n`; };
+        Blockly.JavaScript['hide_sprite'] = function () { return `engine.hideSprite(engine.currentSpriteId);\n`; };
+        Blockly.JavaScript['set_size'] = function (block) {
+          const size = Blockly.JavaScript.valueToCode(block, 'SIZE', Blockly.JavaScript.ORDER_ATOMIC) || '100';
+          return `engine.setSize(engine.currentSpriteId, ${size});\n`;
+        };
+        Blockly.JavaScript['set_color'] = function (block) {
+          const color = Blockly.JavaScript.valueToCode(block, 'COLOR', Blockly.JavaScript.ORDER_ATOMIC) || "'#4ecdc4'";
+          return `engine.setColor(engine.currentSpriteId, ${color});\n`;
+        };
+        Blockly.JavaScript['sprite_touching_other'] = function (block) {
+          const target = block.getFieldValue('SPRITE');
+          return [`engine.isTouchingSprite(engine.currentSpriteId, ${JSON.stringify(target)})`, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+        };
+        Blockly.JavaScript['distance_to_sprite'] = function (block) {
+          const target = block.getFieldValue('SPRITE');
+          return [`engine.distanceToSprite(engine.currentSpriteId, ${JSON.stringify(target)})`, Blockly.JavaScript.ORDER_FUNCTION_CALL];
+        };
+        Blockly.JavaScript['touching_edge'] = function () { return [`engine.isTouchingEdge(engine.currentSpriteId)`, Blockly.JavaScript.ORDER_FUNCTION_CALL]; };
+        Blockly.JavaScript['set_variable'] = function (block) {
+          const variableName = block.getFieldValue('VAR') || 'score';
+          const value = Blockly.JavaScript.valueToCode(block, 'VALUE', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          return `engine.setVariable(engine.currentSpriteId, ${JSON.stringify(variableName)}, ${value});\n`;
+        };
+        Blockly.JavaScript['change_variable'] = function (block) {
+          const variableName = block.getFieldValue('VAR') || 'score';
+          const value = Blockly.JavaScript.valueToCode(block, 'VALUE', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          return `engine.changeVariable(engine.currentSpriteId, ${JSON.stringify(variableName)}, ${value});\n`;
+        };
+        Blockly.JavaScript['random_between'] = function (block) {
+          const min = Blockly.JavaScript.valueToCode(block, 'MIN', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          const max = Blockly.JavaScript.valueToCode(block, 'MAX', Blockly.JavaScript.ORDER_ATOMIC) || '10';
+          return [`(Math.random() * (Number(${max}) - Number(${min})) + Number(${min}))`, Blockly.JavaScript.ORDER_ATOMIC];
+        };
+        Blockly.JavaScript['destroy_sprite'] = function () { return `engine.destroySprite(engine.currentSpriteId);\n`; };
+        Blockly.JavaScript['set_position_absolute'] = function (block) {
+          const x = Blockly.JavaScript.valueToCode(block, 'X', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          const y = Blockly.JavaScript.valueToCode(block, 'Y', Blockly.JavaScript.ORDER_ATOMIC) || '0';
+          return `engine.setPosition(engine.currentSpriteId, ${x}, ${y});\n`;
+        };
+        Blockly.JavaScript['play_sound'] = function (block) {
+          const soundName = block.getFieldValue('SOUND');
+          return `engine.playSound(engine.currentSpriteId, ${JSON.stringify(soundName)});\n`;
+        };
+
+        window.__miniEngineBlocksRegistered = true;
+      }
+
+      function makeStarterSprites() {
+        const player = new Sprite('Player');
+        player.x = -150; player.y = 0; player.color = '#4ecdc4'; player.size = 54;
+        const coin = new Sprite('Coin');
+        coin.x = 120; coin.y = 40; coin.color = '#f7b801'; coin.size = 26;
+        engine.addSprite(player);
+        engine.addSprite(coin);
+      }
+
+      function createWorkspaceForSprite(sprite) {
+        if (workspaceMap.has(sprite.id)) return workspaceMap.get(sprite.id);
+        const workspace = Blockly.inject('blocklyDiv', {
+          toolbox: toolboxXml,
+          theme: Blockly.Themes.Classic,
+          move: { scrollbars: true, drag: true, wheel: true },
+          zoom: { controls: true, wheel: true, startScale: 1, maxScale: 3, minScale: 0.3 }
+        });
+        workspace.addChangeListener(() => {
+          const xml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
+          sprite.programXml = xml;
+        });
+        workspaceMap.set(sprite.id, workspace);
+        return workspace;
+      }
+
+      function renderSpriteList() {
+        spriteListEl.innerHTML = '';
+        for (const sprite of engine.sprites) {
+          const card = document.createElement('div');
+          card.className = 'sprite-card';
+          if (sprite.id === engine.selectedSpriteId) card.classList.add('selected');
+          card.addEventListener('click', () => {
+            engine.setSelectedSprite(sprite.id);
+            renderSpriteList();
+            loadSelectedSpriteWorkspace();
+            renderCostumeCanvas();
+            renderSoundList();
+          });
+
+          const meta = document.createElement('div');
+          meta.className = 'sprite-meta';
+          const thumb = document.createElement('div');
+          thumb.className = 'sprite-thumb';
+          thumb.textContent = sprite.name.slice(0, 2).toUpperCase();
+          thumb.style.background = `linear-gradient(135deg, ${sprite.color}, #7cc6ff)`;
+          const name = document.createElement('span');
+          name.className = 'sprite-name';
+          name.textContent = sprite.name;
+          meta.append(thumb, name);
+
+          const badge = document.createElement('span');
+          badge.textContent = sprite.visible ? 'ON' : 'OFF';
+          badge.style.color = sprite.visible ? '#5eead4' : '#fca5a5';
+          badge.style.fontSize = '0.72rem';
+          badge.style.opacity = '0.9';
+
+          card.append(meta, badge);
+          spriteListEl.appendChild(card);
+        }
+      }
+
+      function loadSelectedSpriteWorkspace() {
+        const sprite = engine.getSpriteById(engine.selectedSpriteId);
+        if (!sprite) return;
+        const workspace = createWorkspaceForSprite(sprite);
+        workspace.clear();
+        try {
+          const dom = Blockly.Xml.textToDom(sprite.programXml);
+          if (dom && dom.nodeName !== '#text' && dom.childNodes.length > 0) {
+            Blockly.Xml.domToWorkspace(dom, workspace);
+          }
+        } catch (error) {
+          console.warn('Unable to restore workspace', error);
+        }
+        setTimeout(() => workspace.resize(), 20);
+      }
+
+      function runCurrentProject() {
+        engine.stop();
+        engine.clearLoops();
+        for (const sprite of engine.sprites) {
+          const workspace = workspaceMap.get(sprite.id);
+          if (!workspace) continue;
+          const script = Blockly.JavaScript.workspaceToCode(workspace);
+          const runner = new Function('engine', `
+            const sprite = engine.getSpriteById('${sprite.id}');
+            engine.currentSpriteId = '${sprite.id}';
+            try { ${script} } catch (error) { console.error('Script error on ' + sprite.name, error); }
+          `);
+          runner(engine);
+        }
+        engine.render();
+        engine.start();
+      }
+
+      function setActiveTab(tabName) {
+        tabButtons.forEach((button) => {
+          button.classList.toggle('active', button.dataset.tab === tabName);
+        });
+        Object.entries(tabPanels).forEach(([key, panel]) => {
+          panel.classList.toggle('hidden', key !== tabName);
+        });
+      }
+
+      function renderCostumeCanvas() {
+        const sprite = engine.getSpriteById(engine.selectedSpriteId);
+        if (!sprite) return;
+        costumeCtx.clearRect(0, 0, costumeCanvas.width, costumeCanvas.height);
+        costumeCtx.fillStyle = '#0b1020';
+        costumeCtx.fillRect(0, 0, costumeCanvas.width, costumeCanvas.height);
+
+        const image = new Image();
+        image.onload = () => {
+          const size = 180;
+          const x = costumeCanvas.width / 2 - size / 2;
+          const y = costumeCanvas.height / 2 - size / 2;
+          costumeCtx.drawImage(image, x, y, size, size);
+        };
+        image.src = sprite.getCurrentCostume().dataUrl;
+        brushColorInput.value = sprite.color;
+      }
+
+      function beginDrawing(event) {
+        const sprite = engine.getSpriteById(engine.selectedSpriteId);
+        if (!sprite) return;
+        const rect = costumeCanvas.getBoundingClientRect();
+        const scaleX = costumeCanvas.width / rect.width;
+        const scaleY = costumeCanvas.height / rect.height;
+        const x = (event.clientX - rect.left) * scaleX;
+        const y = (event.clientY - rect.top) * scaleY;
+
+        costumeCtx.lineWidth = Number(brushSizeInput.value);
+        costumeCtx.lineCap = 'round';
+        costumeCtx.lineJoin = 'round';
+        costumeCtx.strokeStyle = brushColorInput.value;
+        costumeCtx.beginPath();
+        costumeCtx.moveTo(x, y);
+        costumeCtx.lineTo(x + 1, y + 1);
+        costumeCtx.stroke();
+
+        sprite.costumes[0].dataUrl = costumeCanvas.toDataURL();
+        sprite.color = brushColorInput.value;
+        renderSpriteList();
+      }
+
+      function clearCostume() {
+        const sprite = engine.getSpriteById(engine.selectedSpriteId);
+        if (!sprite) return;
+        costumeCtx.clearRect(0, 0, costumeCanvas.width, costumeCanvas.height);
+        costumeCtx.fillStyle = '#0b1020';
+        costumeCtx.fillRect(0, 0, costumeCanvas.width, costumeCanvas.height);
+        sprite.costumes[0].dataUrl = sprite.createDefaultCostumeDataUrl(sprite.color);
+        renderCostumeCanvas();
+      }
+
+      function renderSoundList() {
+        const sprite = engine.getSpriteById(engine.selectedSpriteId);
+        if (!sprite) return;
+        soundList.innerHTML = '';
+        if (!sprite.sounds.length) {
+          const empty = document.createElement('div');
+          empty.textContent = 'No sounds yet. Generate one in the sound tab.';
+          empty.style.opacity = '0.82';
+          soundList.appendChild(empty);
+          return;
+        }
+        for (const sound of sprite.sounds) {
+          const chip = document.createElement('div');
+          chip.className = 'sound-chip';
+          const label = document.createElement('span');
+          label.textContent = sound.name;
+          const play = document.createElement('button');
+          play.textContent = 'Play';
+          play.addEventListener('click', () => {
+            const audio = new Audio(sound.dataUrl);
+            audio.play();
+          });
+          chip.append(label, play);
+          soundList.appendChild(chip);
+        }
+      }
+
+      function generateTone() {
+        const sprite = engine.getSpriteById(engine.selectedSpriteId);
+        if (!sprite) return;
+        const context = engine.getAudioContext();
+        if (!context) return;
+        const oscillator = context.createOscillator();
+        const gainNode = context.createGain();
+        const frequency = Number(toneFrequencyInput.value);
+        const duration = Number(toneDurationInput.value);
+        oscillator.type = 'square';
+        oscillator.frequency.value = frequency;
+        gainNode.gain.value = 0.05;
+        oscillator.connect(gainNode);
+        gainNode.connect(context.destination);
+        oscillator.start();
+        oscillator.stop(context.currentTime + duration);
+        const dataUrl = createToneDataUrl(frequency, duration);
+        sprite.sounds.push({ id: (crypto && crypto.randomUUID) ? crypto.randomUUID() : 'sound-' + Math.random().toString(16).slice(2), name: `tone-${sprite.sounds.length + 1}`, dataUrl });
+        renderSoundList();
+      }
+
+      function createToneDataUrl(frequency, duration) {
+        const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
+        if (!AudioContextCtor) return '';
+        const audioCtx = new AudioContextCtor();
+        const sampleRate = 22050;
+        const frameCount = sampleRate * duration;
+        const buffer = audioCtx.createBuffer(1, frameCount, sampleRate);
+        const channelData = buffer.getChannelData(0);
+        for (let i = 0; i < frameCount; i += 1) {
+          const t = i / sampleRate;
+          const envelope = 1 - t / duration;
+          channelData[i] = Math.sin(2 * Math.PI * frequency * t) * envelope * 0.25;
+        }
+        const wav = audioBufferToWav(buffer);
+        return URL.createObjectURL(wav);
+      }
+
+      function audioBufferToWav(audioBuffer) {
+        const numChannels = audioBuffer.numberOfChannels;
+        const sampleRate = audioBuffer.sampleRate;
+        const format = 1;
+        const bitDepth = 16;
+        const samples = audioBuffer.length * numChannels;
+        const buffer = new ArrayBuffer(44 + samples * 2);
+        const view = new DataView(buffer);
+        const writeString = (offset, string) => {
+          for (let i = 0; i < string.length; i += 1) view.setUint8(offset + i, string.charCodeAt(i));
+        };
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + samples * 2, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true);
+        view.setUint16(20, format, true);
+        view.setUint16(22, numChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * numChannels * (bitDepth / 8), true);
+        view.setUint16(32, numChannels * (bitDepth / 8), true);
+        view.setUint16(34, bitDepth, true);
+        writeString(36, 'data');
+        view.setUint32(40, samples * 2, true);
+        let offset = 44;
+        for (let i = 0; i < audioBuffer.length; i += 1) {
+          for (let channel = 0; channel < numChannels; channel += 1) {
+            const data = Math.max(-1, Math.min(1, audioBuffer.getChannelData(channel)[i]));
+            view.setInt16(offset, data < 0 ? data * 0x8000 : data * 0x7fff, true);
+            offset += 2;
+          }
+        }
+        return new Blob([buffer], { type: 'audio/wav' });
+      }
+
+      function bindEvents() {
+        addSpriteButton.addEventListener('click', () => {
+          const count = engine.sprites.length + 1;
+          const sprite = new Sprite(`Sprite ${count}`);
+          sprite.x = (Math.random() - 0.5) * 250;
+          sprite.y = (Math.random() - 0.5) * 180;
+          sprite.color = ['#4ecdc4', '#f7b801', '#ff6b6b', '#81c784'][count % 4];
+          engine.addSprite(sprite);
+          renderSpriteList();
+          engine.setSelectedSprite(sprite.id);
+          loadSelectedSpriteWorkspace();
+          renderCostumeCanvas();
+          renderSoundList();
+        });
+
+        tabButtons.forEach((button) => {
+          button.addEventListener('click', () => setActiveTab(button.dataset.tab));
+        });
+
+        runButton.addEventListener('click', runCurrentProject);
+        stopButton.addEventListener('click', () => engine.stop());
+        clearCostumeButton.addEventListener('click', clearCostume);
+        playToneButton.addEventListener('click', generateTone);
+        saveToneButton.addEventListener('click', generateTone);
+
+        costumeCanvas.addEventListener('pointerdown', beginDrawing);
+        costumeCanvas.addEventListener('pointermove', (event) => {
+          if (event.buttons === 1) beginDrawing(event);
+        });
+      }
+
+      function init() {
+        registerCustomBlocks();
+        makeStarterSprites();
+        renderSpriteList();
+        engine.setSelectedSprite(engine.sprites[0].id);
+        loadSelectedSpriteWorkspace();
+        setActiveTab('code');
+        renderCostumeCanvas();
+        renderSoundList();
+        bindEvents();
+        engine.render();
+        window.engine = engine;
+        window.Blockly = Blockly;
+      }
+
+      if (window.Blockly) {
+        init();
+      } else {
+        const checkBlockly = setInterval(() => {
+          if (window.Blockly) {
+            clearInterval(checkBlockly);
+            init();
+          }
+        }, 50);
+      }
+
+      window.addEventListener('resize', () => {
+        for (const workspace of workspaceMap.values()) {
+          workspace.resize();
+        }
+      });
+    </script>
   </body>
 </html>
