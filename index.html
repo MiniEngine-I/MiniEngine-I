@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiniEngine-I</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>MiniEngine-I</h1>
+          <button id="addSpriteButton" class="primary-btn">Add Sprite</button>
+        </div>
+
+        <div id="spriteList" class="sprite-list" aria-label="Sprite list"></div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="code">Code</button>
+            <button class="tab-btn" data-tab="costume">Costume</button>
+            <button class="tab-btn" data-tab="sound">Sound</button>
+          </div>
+
+          <div class="actions">
+            <button id="runButton" class="primary-btn">Run</button>
+            <button id="stopButton" class="secondary-btn">Stop</button>
+          </div>
+        </header>
+
+        <section id="stagePanel" class="stage-panel">
+          <canvas id="stageCanvas" width="960" height="540"></canvas>
+        </section>
+
+        <section id="codeTab" class="tab-panel active">
+          <div id="blocklyArea" class="blockly-area">
+            <div id="blocklyDiv"></div>
+          </div>
+        </section>
+
+        <section id="costumeTab" class="tab-panel hidden">
+          <div class="costume-editor">
+            <div class="tool-row">
+              <label>Brush</label>
+              <input id="brushSize" type="range" min="1" max="30" value="8" />
+              <label>Color</label>
+              <input id="brushColor" type="color" value="#4ecdc4" />
+              <button id="clearCostumeButton" class="secondary-btn">Clear</button>
+            </div>
+            <canvas id="costumeCanvas" width="320" height="320"></canvas>
+          </div>
+        </section>
+
+        <section id="soundTab" class="tab-panel hidden">
+          <div class="sound-editor">
+            <div class="tool-row">
+              <label>Frequency</label>
+              <input id="toneFrequency" type="range" min="100" max="1200" step="10" value="440" />
+              <label>Duration</label>
+              <input id="toneDuration" type="range" min="0.1" max="1.5" step="0.05" value="0.35" />
+              <button id="playToneButton" class="primary-btn">Play</button>
+              <button id="saveToneButton" class="secondary-btn">Save Sound</button>
+            </div>
+
+            <div id="soundList" class="sound-list"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <script type="module" src="./js/app.js"></script>
+  </body>
+</html>

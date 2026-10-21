@@ -1,16 +1,31 @@
-## Hi there 👋
+# MiniEngine-I
 
-<!--
-**MiniEngine-I/MiniEngine-I** is a ✨ _special_ ✨ repository because its `README.md` (this file) appears on your GitHub profile.
+MiniEngine-I is a private Scratch-like game engine prototype built with Blockly and HTML5 canvas.
 
-Here are some ideas to get you started:
+## Features
 
-- 🔭 I’m currently working on ...
-- 🌱 I’m currently learning ...
-- 👯 I’m looking to collaborate on ...
-- 🤔 I’m looking for help with ...
-- 💬 Ask me about ...
-- 📫 How to reach me: ...
-- 😄 Pronouns: ...
-- ⚡ Fun fact: ...
--->
+- Blockly visual coding
+- Multi-sprite system with separate code workspaces
+- Costume editor canvas
+- Sound editor for generated tones and effects
+- Scratch-like variable and sprite interactions
+- Modular file organization so code can be split across multiple JS files without breaking access
+
+## Run locally
+
+```bash
+python3 -m http.server 8000
+```
+
+Then open:
+
+http://localhost:8000
+
+## Project structure
+
+- `index.html` — app shell
+- `styles.css` — app styling
+- `js/blocks.js` — custom Blockly blocks and toolbox
+- `js/engine.js` — runtime engine and game logic
+- `js/sprite.js` — sprite model and costume storage
+- `js/app.js` — app UI, file wiring, and runtime behavior
