@@ -1,524 +1,77 @@
-import { Sprite } from './sprite.js';
-import { MiniEngine } from './engine.js';
-import { toolboxXml, registerCustomBlocks } from './blocks.js';
-
-const stageCanvas = document.getElementById('stageCanvas');
-const costumeCanvas = document.getElementById('costumeCanvas');
-const costumeCtx = costumeCanvas.getContext('2d');
-const engine = new MiniEngine(stageCanvas);
-const workspaceMap = new Map();
-const selectedSpriteState = { id: null };
-
-const spriteListEl = document.getElementById('spriteList');
-const addSpriteButton = document.getElementById('addSpriteButton');
-const runButton = document.getElementById('runButton');
-const stopButton = document.getElementById('stopButton');
-const emptyEditorStateEl = document.getElementById('emptyEditorState');
-
-const spriteToolbar = document.getElementById('spriteToolbar');
-const spriteNameInput = document.getElementById('spriteNameInput');
-const spriteColorInput = document.getElementById('spriteColorInput');
-const spriteSizeInput = document.getElementById('spriteSizeInput');
-const toggleVisibilityButton = document.getElementById('toggleVisibilityButton');
-const duplicateSpriteButton = document.getElementById('duplicateSpriteButton');
-const deleteSpriteButton = document.getElementById('deleteSpriteButton');
-
-const brushColorInput = document.getElementById('brushColor');
-const brushSizeInput = document.getElementById('brushSize');
-const clearCostumeButton = document.getElementById('clearCostumeButton');
-const soundImportInput = document.getElementById('soundImportInput');
-const soundListEl = document.getElementById('soundList');
-const tabButtons = [...document.querySelectorAll('.tab-btn')];
-const tabPanels = {
-  code: document.getElementById('codeTab'),
-  costume: document.getElementById('costumeTab'),
-  sound: document.getElementById('soundTab'),
-};
-
-let activeCanvasTool = 'brush';
-
-registerCustomBlocks();
-
-function getSelectedSprite() {
-  return engine.getSpriteById(selectedSpriteState.id);
-}
-
-function makeStarterSprites() {
-  const player = new Sprite('Player');
-  player.x = -150;
-  player.y = 0;
-  player.color = '#4ecdc4';
-  player.size = 54;
-
-  const coin = new Sprite('Coin');
-  coin.x = 120;
-  coin.y = 40;
-  coin.color = '#f7b801';
-  coin.size = 26;
-
-  engine.addSprite(player);
-  engine.addSprite(coin);
-  selectedSpriteState.id = player.id;
-}
-
-function getZelosTheme() {
-  const themes = window.Blockly && window.Blockly.Themes ? window.Blockly.Themes : {};
-  return themes.Zelos || themes.Classic || {};
-}
-
-function createWorkspaceForSprite(sprite) {
-  if (workspaceMap.has(sprite.id)) {
-    return workspaceMap.get(sprite.id);
-  }
-
-  const workspace = window.Blockly.inject('blocklyDiv', {
-    toolbox: toolboxXml,
-    theme: getZelosTheme(),
-    renderer: 'zelos',
-    move: {
-      scrollbars: true,
-      drag: true,
-      wheel: true,
-    },
-    zoom: {
-      controls: true,
-      wheel: true,
-      startScale: 1,
-      maxScale: 3,
-      minScale: 0.3,
-    },
-    trashcan: true,
-  });
-
-  workspaceMap.set(sprite.id, workspace);
-  workspace.addChangeListener(() => {
-    sprite.programXml = Blockly.Xml.domToText(Blockly.Xml.workspaceToDom(workspace));
-  });
-
-  workspace.setVisible(false);
-
-  try {
-    if (sprite.programXml) {
-      const dom = Blockly.Xml.textToDom(sprite.programXml);
-      if (dom && dom.nodeName !== '#text' && dom.childNodes.length > 0) {
-        Blockly.Xml.domToWorkspace(dom, workspace);
-      }
-    }
-  } catch (error) {
-    console.warn('Unable to restore sprite workspace', error);
-  }
-
-  return workspace;
-}
-
-function renderSpriteList() {
-  spriteListEl.innerHTML = '';
-
-  for (const sprite of engine.sprites) {
-    const card = document.createElement('div');
-    card.className = 'sprite-card';
-    if (sprite.id === selectedSpriteState.id) {
-      card.classList.add('selected');
-    }
-
-    card.addEventListener('click', () => {
-      selectSprite(sprite.id);
-    });
-
-    const meta = document.createElement('div');
-    meta.className = 'sprite-meta';
-
-    const thumb = document.createElement('div');
-    thumb.className = 'sprite-thumb';
-    thumb.textContent = sprite.name.slice(0, 2).toUpperCase();
-    thumb.style.background = sprite.color || '#d9d9d9';
-
-    const name = document.createElement('span');
-    name.className = 'sprite-name';
-    name.textContent = sprite.name;
-
-    meta.append(thumb, name);
-
-    const status = document.createElement('span');
-    status.className = 'sprite-status';
-    status.textContent = sprite.visible ? 'Visible' : 'Hidden';
-
-    card.append(meta, status);
-    spriteListEl.appendChild(card);
-  }
-}
-
-function selectSprite(spriteId) {
-  if (!spriteId) return;
-  selectedSpriteState.id = spriteId;
-  engine.setSelectedSprite(spriteId);
-  renderSpriteList();
-  updateSpriteToolbar();
-  showWorkspaceForSelectedSprite();
-  renderCostumeCanvas();
-  renderSoundList();
-}
-
-function updateSpriteToolbar() {
-  const sprite = getSelectedSprite();
-  if (!sprite) {
-    spriteToolbar.classList.remove('active');
-    emptyEditorStateEl.classList.remove('hidden');
-    return;
-  }
-
-  spriteToolbar.classList.add('active');
-  emptyEditorStateEl.classList.add('hidden');
-  spriteNameInput.value = sprite.name;
-  spriteColorInput.value = sprite.color || '#4ecdc4';
-  spriteSizeInput.value = String(sprite.size || 54);
-  toggleVisibilityButton.textContent = sprite.visible ? 'Hide' : 'Show';
-}
-
-function showWorkspaceForSelectedSprite() {
-  const sprite = getSelectedSprite();
-  if (!sprite) {
-    return;
-  }
-
-  const workspace = createWorkspaceForSprite(sprite);
-  for (const [id, item] of workspaceMap.entries()) {
-    item.setVisible(id === sprite.id);
-  }
-  workspace.resize();
-}
-
-function setActiveTab(tabName) {
-  tabButtons.forEach((button) => {
-    button.classList.toggle('active', button.dataset.tab === tabName);
-  });
-
-  Object.entries(tabPanels).forEach(([key, panel]) => {
-    panel.classList.toggle('hidden', key !== tabName);
-  });
-}
-
-function renderCostumeCanvas() {
-  const sprite = getSelectedSprite();
-  if (!sprite) {
-    costumeCtx.clearRect(0, 0, costumeCanvas.width, costumeCanvas.height);
-    return;
-  }
-
-  costumeCtx.clearRect(0, 0, costumeCanvas.width, costumeCanvas.height);
-  costumeCtx.fillStyle = '#1f2937';
-  costumeCtx.fillRect(0, 0, costumeCanvas.width, costumeCanvas.height);
-
-  const image = new Image();
-  image.onload = () => {
-    const size = 180;
-    const x = costumeCanvas.width / 2 - size / 2;
-    const y = costumeCanvas.height / 2 - size / 2;
-    costumeCtx.drawImage(image, x, y, size, size);
-  };
-  image.src = sprite.getCurrentCostume().dataUrl;
-  spriteColorInput.value = sprite.color || '#4ecdc4';
-}
-
-function saveCurrentCostume() {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-  const dataUrl = costumeCanvas.toDataURL();
-  sprite.costumes[0].dataUrl = dataUrl;
-  sprite.color = spriteColorInput.value;
-  renderSpriteList();
-}
-
-function applyCanvasToolSelection(toolName) {
-  activeCanvasTool = toolName;
-  document.querySelectorAll('.tool-btn').forEach((button) => {
-    button.classList.toggle('active', button.dataset.tool === toolName);
-  });
-}
-
-function beginDrawing(event) {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-
-  if (activeCanvasTool === 'fill') {
-    costumeCtx.fillStyle = brushColorInput.value;
-    costumeCtx.fillRect(0, 0, costumeCanvas.width, costumeCanvas.height);
-    saveCurrentCostume();
-    return;
-  }
-
-  const rect = costumeCanvas.getBoundingClientRect();
-  const scaleX = costumeCanvas.width / rect.width;
-  const scaleY = costumeCanvas.height / rect.height;
-  const x = (event.clientX - rect.left) * scaleX;
-  const y = (event.clientY - rect.top) * scaleY;
-
-  costumeCtx.lineCap = 'round';
-  costumeCtx.lineJoin = 'round';
-  costumeCtx.lineWidth = Number(brushSizeInput.value);
-
-  if (activeCanvasTool === 'eraser') {
-    costumeCtx.globalCompositeOperation = 'destination-out';
-    costumeCtx.strokeStyle = 'rgba(0,0,0,1)';
-  } else {
-    costumeCtx.globalCompositeOperation = 'source-over';
-    costumeCtx.strokeStyle = brushColorInput.value;
-  }
-
-  costumeCtx.beginPath();
-  costumeCtx.moveTo(x, y);
-  costumeCtx.lineTo(x + 0.1, y + 0.1);
-  costumeCtx.stroke();
-  costumeCtx.globalCompositeOperation = 'source-over';
-
-  saveCurrentCostume();
-}
-
-function clearCostume() {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-  costumeCtx.clearRect(0, 0, costumeCanvas.width, costumeCanvas.height);
-  costumeCtx.fillStyle = '#1f2937';
-  costumeCtx.fillRect(0, 0, costumeCanvas.width, costumeCanvas.height);
-  sprite.costumes[0].dataUrl = sprite.createDefaultCostumeDataUrl(sprite.color || '#4ecdc4');
-  saveCurrentCostume();
-}
-
-function renderSoundList() {
-  const sprite = getSelectedSprite();
-  if (!sprite) {
-    soundListEl.innerHTML = '';
-    return;
-  }
-
-  soundListEl.innerHTML = '';
-
-  if (!sprite.sounds || sprite.sounds.length === 0) {
-    const empty = document.createElement('div');
-    empty.className = 'sound-empty';
-    empty.textContent = 'No sounds imported yet. Use the sound tab to add audio files.';
-    soundListEl.appendChild(empty);
-    return;
-  }
-
-  sprite.sounds.forEach((sound) => {
-    const chip = document.createElement('div');
-    chip.className = 'sound-chip';
-
-    const label = document.createElement('span');
-    label.className = 'name';
-    label.textContent = sound.name;
-
-    const controls = document.createElement('div');
-    controls.style.display = 'flex';
-    controls.style.gap = '8px';
-
-    const play = document.createElement('button');
-    play.type = 'button';
-    play.textContent = 'Play';
-    play.addEventListener('click', () => {
-      const audio = new Audio(sound.dataUrl);
-      audio.play();
-    });
-
-    const remove = document.createElement('button');
-    remove.type = 'button';
-    remove.textContent = 'Delete';
-    remove.style.background = '#f4dede';
-    remove.style.color = '#ae4c4c';
-    remove.style.borderColor = 'rgba(174, 76, 76, 0.15)';
-    remove.addEventListener('click', () => {
-      sprite.sounds = sprite.sounds.filter((entry) => entry.id !== sound.id);
-      renderSoundList();
-    });
-
-    controls.append(play, remove);
-    chip.append(label, controls);
-    soundListEl.appendChild(chip);
-  });
-}
-
-function handleSoundImport(event) {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-
-  const files = Array.from(event.target.files || []);
-  if (!files.length) return;
-
-  for (const file of files) {
-    const objectUrl = URL.createObjectURL(file);
-    const cleanName = file.name.replace(/\.[^/.]+$/, '');
-    sprite.sounds.push({
-      id: crypto.randomUUID(),
-      name: cleanName || 'sound',
-      dataUrl: objectUrl,
-    });
-  }
-
-  event.target.value = '';
-  renderSoundList();
-}
-
-function addSprite() {
-  const count = engine.sprites.length + 1;
-  const sprite = new Sprite(`Sprite ${count}`);
-  sprite.x = (Math.random() - 0.5) * 220;
-  sprite.y = (Math.random() - 0.5) * 160;
-  sprite.color = ['#4ecdc4', '#f7b801', '#ff8e6e', '#81c784'][count % 4];
-  engine.addSprite(sprite);
-  selectSprite(sprite.id);
-  renderSpriteList();
-}
-
-function renameSelectedSprite(event) {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-  sprite.name = event.target.value.trim() || sprite.name;
-  renderSpriteList();
-}
-
-function changeSelectedSpriteColor(event) {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-  sprite.color = event.target.value;
-  renderSpriteList();
-  renderCostumeCanvas();
-}
-
-function changeSelectedSpriteSize(event) {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-  sprite.size = Number(event.target.value || 54);
-  renderCostumeCanvas();
-}
-
-function toggleSelectedVisibility() {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-  sprite.visible = !sprite.visible;
-  updateSpriteToolbar();
-  renderSpriteList();
-}
-
-function duplicateSelectedSprite() {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-
-  const clone = Sprite.fromJSON(JSON.parse(JSON.stringify(sprite.serialize())));
-  clone.id = crypto.randomUUID();
-  clone.name = `${sprite.name} copy`;
-  clone.costumes = sprite.costumes.map((costume) => ({
-    ...costume,
-    id: crypto.randomUUID(),
-  }));
-  clone.sounds = sprite.sounds.map((sound) => ({
-    ...sound,
-    id: crypto.randomUUID(),
-  }));
-
-  engine.addSprite(clone);
-  selectSprite(clone.id);
-  renderSpriteList();
-}
-
-function deleteSelectedSprite() {
-  const sprite = getSelectedSprite();
-  if (!sprite) return;
-
-  const nextSprite = engine.sprites.find((entry) => entry.id !== sprite.id);
-  engine.sprites = engine.sprites.filter((entry) => entry.id !== sprite.id);
-
-  const workspace = workspaceMap.get(sprite.id);
-  if (workspace) {
-    workspace.dispose();
-    workspaceMap.delete(sprite.id);
-  }
-
-  if (nextSprite) {
-    selectSprite(nextSprite.id);
-  } else {
-    selectedSpriteState.id = null;
-    engine.selectedSpriteId = null;
-    renderSpriteList();
-    updateSpriteToolbar();
-    renderCostumeCanvas();
-    renderSoundList();
-  }
-}
-
-function runCurrentProject() {
-  engine.stop();
-  engine.clearLoops();
-
-  for (const sprite of engine.sprites) {
-    const workspace = workspaceMap.get(sprite.id);
-    if (!workspace) continue;
-    const code = Blockly.JavaScript.workspaceToCode(workspace);
-    const runner = new Function('engine', `
-      const sprite = engine.getSpriteById('${sprite.id}');
-      engine.currentSpriteId = '${sprite.id}';
-      try {
-        ${code}
-      } catch (error) {
-        console.error('Script error for ' + sprite.name, error);
-      }
-    `);
-    runner(engine);
-  }
-
-  engine.render();
-  engine.start();
-}
-
-function bindEvents() {
-  addSpriteButton.addEventListener('click', addSprite);
-  tabButtons.forEach((button) => {
-    button.addEventListener('click', () => setActiveTab(button.dataset.tab));
-  });
-
-  runButton.addEventListener('click', runCurrentProject);
-  stopButton.addEventListener('click', () => {
-    engine.stop();
-  });
-
-  spriteNameInput.addEventListener('input', renameSelectedSprite);
-  spriteColorInput.addEventListener('input', changeSelectedSpriteColor);
-  spriteSizeInput.addEventListener('input', changeSelectedSpriteSize);
-  toggleVisibilityButton.addEventListener('click', toggleSelectedVisibility);
-  duplicateSpriteButton.addEventListener('click', duplicateSelectedSprite);
-  deleteSpriteButton.addEventListener('click', deleteSelectedSprite);
-
-  clearCostumeButton.addEventListener('click', clearCostume);
-  soundImportInput.addEventListener('change', handleSoundImport);
-
-  document.querySelectorAll('.tool-btn').forEach((button) => {
-    button.addEventListener('click', () => applyCanvasToolSelection(button.dataset.tool));
-  });
-
-  costumeCanvas.addEventListener('pointerdown', beginDrawing);
-  costumeCanvas.addEventListener('pointermove', (event) => {
-    if (event.buttons === 1) {
-      beginDrawing(event);
-    }
-  });
-
-  window.addEventListener('resize', () => {
-    for (const workspace of workspaceMap.values()) {
-      workspace.resize();
-    }
-  });
-}
-
-makeStarterSprites();
-renderSpriteList();
-selectSprite(engine.sprites[0].id);
-setActiveTab('code');
-renderCostumeCanvas();
-renderSoundList();
-bindEvents();
-engine.render();
-
-window.engine = engine;
-window.Blockly = Blockly;
-
-console.log('MiniEngine-I ready');
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MiniEngine-I</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <h1>MiniEngine-I</h1>
+          <button id="addSpriteButton" class="primary-btn">Add Sprite</button>
+        </div>
+
+        <div id="spriteList" class="sprite-list" aria-label="Sprite list"></div>
+      </aside>
+
+      <main class="main-panel">
+        <header class="topbar">
+          <div class="tab-buttons">
+            <button class="tab-btn active" data-tab="code">Code</button>
+            <button class="tab-btn" data-tab="costume">Costume</button>
+            <button class="tab-btn" data-tab="sound">Sound</button>
+          </div>
+
+          <div class="actions">
+            <button id="runButton" class="primary-btn">Run</button>
+            <button id="stopButton" class="secondary-btn">Stop</button>
+          </div>
+        </header>
+
+        <section id="stagePanel" class="stage-panel">
+          <canvas id="stageCanvas" width="960" height="540"></canvas>
+        </section>
+
+        <section id="codeTab" class="tab-panel active">
+          <div id="blocklyArea" class="blockly-area">
+            <div id="blocklyDiv"></div>
+          </div>
+        </section>
+
+        <section id="costumeTab" class="tab-panel hidden">
+          <div class="costume-editor">
+            <div class="tool-row">
+              <label>Brush</label>
+              <input id="brushSize" type="range" min="1" max="30" value="8" />
+              <label>Color</label>
+              <input id="brushColor" type="color" value="#4ecdc4" />
+              <button id="clearCostumeButton" class="secondary-btn">Clear</button>
+            </div>
+            <canvas id="costumeCanvas" width="320" height="320"></canvas>
+          </div>
+        </section>
+
+        <section id="soundTab" class="tab-panel hidden">
+          <div class="sound-editor">
+            <div class="tool-row">
+              <label>Frequency</label>
+              <input id="toneFrequency" type="range" min="100" max="1200" step="10" value="440" />
+              <label>Duration</label>
+              <input id="toneDuration" type="range" min="0.1" max="1.5" step="0.05" value="0.35" />
+              <button id="playToneButton" class="primary-btn">Play</button>
+              <button id="saveToneButton" class="secondary-btn">Save Sound</button>
+            </div>
+
+            <div id="soundList" class="sound-list"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="https://unpkg.com/blockly/blockly.min.js" defer></script>
+    <script type="module" src="./js/app.js" defer></script>
+  </body>
+</html>
