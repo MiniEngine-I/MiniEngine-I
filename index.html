@@ -10,8 +10,35 @@
     <div class="app-shell">
       <aside class="sidebar">
         <div class="sidebar-header">
-          <h1>MiniEngine-I</h1>
-          <button id="addSpriteButton" class="primary-btn">Add Sprite</button>
+          <div>
+            <p class="eyebrow">Project</p>
+            <h1>MiniEngine-I</h1>
+          </div>
+          <button id="addSpriteButton" class="primary-btn" type="button">Add sprite</button>
+        </div>
+
+        <div class="sprite-toolbar" id="spriteToolbar">
+          <label class="field">
+            <span>Name</span>
+            <input id="spriteNameInput" type="text" placeholder="Sprite name" />
+          </label>
+
+          <div class="sprite-toolbar-row">
+            <label class="field compact">
+              <span>Color</span>
+              <input id="spriteColorInput" type="color" value="#4ecdc4" />
+            </label>
+            <label class="field compact">
+              <span>Size</span>
+              <input id="spriteSizeInput" type="number" min="10" max="240" value="54" />
+            </label>
+          </div>
+
+          <div class="sprite-toolbar-row">
+            <button id="toggleVisibilityButton" class="secondary-btn" type="button">Hide</button>
+            <button id="duplicateSpriteButton" class="ghost-btn" type="button">Duplicate</button>
+            <button id="deleteSpriteButton" class="danger-btn" type="button">Delete</button>
+          </div>
         </div>
 
         <div id="spriteList" class="sprite-list" aria-label="Sprite list"></div>
@@ -20,20 +47,24 @@
       <main class="main-panel">
         <header class="topbar">
           <div class="tab-buttons">
-            <button class="tab-btn active" data-tab="code">Code</button>
-            <button class="tab-btn" data-tab="costume">Costume</button>
-            <button class="tab-btn" data-tab="sound">Sound</button>
+            <button class="tab-btn active" data-tab="code" type="button">Code</button>
+            <button class="tab-btn" data-tab="costume" type="button">Costume</button>
+            <button class="tab-btn" data-tab="sound" type="button">Sound</button>
           </div>
 
           <div class="actions">
-            <button id="runButton" class="primary-btn">Run</button>
-            <button id="stopButton" class="secondary-btn">Stop</button>
+            <button id="runButton" class="primary-btn" type="button">Run</button>
+            <button id="stopButton" class="secondary-btn" type="button">Stop</button>
           </div>
         </header>
 
         <section id="stagePanel" class="stage-panel">
           <canvas id="stageCanvas" width="960" height="540"></canvas>
         </section>
+
+        <div id="emptyEditorState" class="empty-editor-state">
+          Select a sprite to edit its code, costume, and sounds.
+        </div>
 
         <section id="codeTab" class="tab-panel active">
           <div id="blocklyArea" class="blockly-area">
@@ -48,21 +79,21 @@
               <input id="brushSize" type="range" min="1" max="30" value="8" />
               <label>Color</label>
               <input id="brushColor" type="color" value="#4ecdc4" />
-              <button id="clearCostumeButton" class="secondary-btn">Clear</button>
+              <button id="clearCostumeButton" class="secondary-btn" type="button">Clear</button>
             </div>
-            <canvas id="costumeCanvas" width="320" height="320"></canvas>
+            <div class="canvas-wrap">
+              <canvas id="costumeCanvas" width="320" height="320"></canvas>
+            </div>
           </div>
         </section>
 
         <section id="soundTab" class="tab-panel hidden">
           <div class="sound-editor">
-            <div class="tool-row">
-              <label>Frequency</label>
-              <input id="toneFrequency" type="range" min="100" max="1200" step="10" value="440" />
-              <label>Duration</label>
-              <input id="toneDuration" type="range" min="0.1" max="1.5" step="0.05" value="0.35" />
-              <button id="playToneButton" class="primary-btn">Play</button>
-              <button id="saveToneButton" class="secondary-btn">Save Sound</button>
+            <div class="tool-row sound-import-row">
+              <label class="file-picker">
+                <span>Import sound</span>
+                <input id="soundImportInput" type="file" accept="audio/*" multiple />
+              </label>
             </div>
 
             <div id="soundList" class="sound-list"></div>
